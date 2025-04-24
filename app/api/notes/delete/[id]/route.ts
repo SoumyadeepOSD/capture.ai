@@ -1,11 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/notes/delete/[id]/route.ts
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function DELETE(req: Request, context: { params: { id: string } }) {
-  const { params } = context;
-  const noteId = params?.id;
-
+export async function DELETE(req: Request, context: any) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -15,6 +13,8 @@ export async function DELETE(req: Request, context: { params: { id: string } }) 
   if (userError || !user) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
+
+  const noteId = context?.params?.id;
 
   if (!noteId) {
     return NextResponse.json({ success: false, error: "Note ID is required" }, { status: 400 });
