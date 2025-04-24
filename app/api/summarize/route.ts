@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
     if (!content) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
     }
-    console.log(content);
     
     const chatCompletion = await groq.chat.completions.create({
       messages: [

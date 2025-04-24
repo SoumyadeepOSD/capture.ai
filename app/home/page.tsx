@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -9,7 +10,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
-import { Trash2, Pen, Star, Loader2 } from "lucide-react";
+import { Trash2, Pen, Star, Loader2, Info } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -72,6 +73,13 @@ export default function HomePage() {
   });
 
   const handleDelete = (id: string) => mutation.mutate(id);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const [openNoteViewer, setOpenNoteViewer] = useState(false);
+  const [noteToView, setNoteToView] = useState<any>(null);
 
   return (
     <main className="min-h-screen w-full bg-muted py-10 px-4">
@@ -102,20 +110,23 @@ export default function HomePage() {
             {notes.map((note) => (
               <Card key={note.id} className="bg-background shadow-md hover:shadow-lg transition-shadow relative">
                 <CardHeader>
-                  <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <CardTitle className="text-xl truncate">{note.title}</CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        {new Date(note.created_at).toLocaleString()}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
+                  <div className="flex justify-between items-start mb-2">
+                    {/* Icons Row */}
+                    <div className="flex flex-row items-center justify-around w-full">
+                      <button
+                        onClick={() => {
+                          setNoteToView(note);
+                          setOpenNoteViewer(true);
+                        }}
+                      >
+                        <Info color="blue" size={20} />
+                      </button>
+
                       <Link href={`/edit/${note.id}`}>
                         <Button size="icon" variant="outline">
-                          <Pen className="w-4 h-4" />
+                          <Pen className="w-4 h-4 hover:cursor-pointer" />
                         </Button>
                       </Link>
-
                       <button
                         onClick={() => {
                           setNoteToSummarize(note);
@@ -123,9 +134,8 @@ export default function HomePage() {
                           setOpen(true);
                         }}
                       >
-                        <Star className="w-4 h-4 text-yellow-500" />
+                        <Star className="w-4 h-4 text-yellow-500 hover:cursor-pointer" />
                       </button>
-
                       <AlertDialog>
                         <AlertDialogTrigger className="hover:cursor-pointer">
                           <Trash2 className="w-4 h-4 text-red-500" />
@@ -152,13 +162,24 @@ export default function HomePage() {
                       </AlertDialog>
                     </div>
                   </div>
+
+                  {/* Title Row */}
+                  <CardTitle className="text-xl truncate mb-1">{note.title}</CardTitle>
+
+                  {/* Date */}
+                  <CardDescription className="text-sm text-muted-foreground mb-2">
+                    {new Date(note.created_at).toLocaleString()}
+                  </CardDescription>
                 </CardHeader>
+
+                {/* Content Row */}
                 <CardContent>
                   <p className="text-muted-foreground whitespace-pre-line line-clamp-4">
                     {note.content}
                   </p>
                 </CardContent>
               </Card>
+
             ))}
           </div>
         )}
@@ -192,6 +213,22 @@ export default function HomePage() {
             >
               Summarize
             </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={openNoteViewer} onOpenChange={setOpenNoteViewer}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>📝 {noteToView?.title}</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line text-muted-foreground mt-2">
+              {noteToView?.content}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpenNoteViewer(false)}>
+              Close
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { login, signInWithGoogle } from "./action";
 import Image from "next/image";
 import images from "@/constants/images/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
@@ -27,7 +28,11 @@ export default function LoginPage() {
               Log in
             </Button>
           </form>
-
+          <p className="text-center">Have not any account? 
+            <Link href={"/signup"}>
+            <span className="text-blue-600">Signup</span>
+            </Link>
+          </p>
           <div className="mt-4">
             {/* Google login button */}
             <Button onClick={signInWithGoogle} variant="outline" className="w-full mt-2">

@@ -1,17 +1,19 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
+import Image from 'next/image'
+import images from '@/constants/images/image'
 
 const Header = () => {
   return (
     <div className="text-white text-sm font-bold flex flex-row items-center justify-between w-full">
       {/* Header */}
-      <p>App Logo</p>
-      <ul className="flex flex-row items-center gap-6">
-        <li className="hover:cursor-pointer">Home</li>
-        <li className="hover:cursor-pointer">About</li>
-        <li className="hover:cursor-pointer">Settings</li>
-      </ul>
+      <Image
+        src={images.companyLogo}
+        alt="company-logo"
+        width={150}
+        height={150}
+      />
       {/* Right Side */}
       <div>
         <Link href="/signup">
