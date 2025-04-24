@@ -57,7 +57,7 @@ export default function SignupPage() {
           </p>
           {/* Display success or error message */}
           {message && (
-            <div className="mt-4 text-center text-white font-semibold">
+            <div className="mt-4 text-center font-semibold">
               <p>{message}</p>
             </div>
           )}
