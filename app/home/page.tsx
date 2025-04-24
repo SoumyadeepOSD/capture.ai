@@ -9,48 +9,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Trash2, Pen } from "lucide-react";
 import Link from "next/link";
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounce(query, 1000);
   const [userId, setUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Get user ID on load
   useEffect(() => {
     const getUser = async () => {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) setUserId(user.id);
     };
     getUser();
   }, []);
 
   const { data: notes = [], isLoading, isError } = useQuery({
-    queryKey: ["notes", userId],
-    queryFn: () => fetchNotes(userId!),
-    enabled: !!userId, // wait until userId is available
+    queryKey: ["notes", userId, debouncedQuery],
+    queryFn: () => fetchNotes(userId!, debouncedQuery),
+    enabled: !!userId,
   });
-
-  const filteredNotes = notes.filter(
-    (note) =>
-      note.title.toLowerCase().includes(query.toLowerCase()) ||
-      note.content.toLowerCase().includes(query.toLowerCase())
-  );
 
   const mutation = useMutation({
     mutationFn: deleteNote,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes", userId] });
+      queryClient.invalidateQueries({ queryKey: ["notes", userId, debouncedQuery] });
     },
   });
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this note?")) {
-      mutation.mutate(id);
-    }
-  };
+  const handleDelete = (id: string) => mutation.mutate(id);
 
   return (
     <main className="min-h-screen w-full bg-muted py-10 px-4">
@@ -74,11 +74,11 @@ export default function HomePage() {
           <p>Loading notes...</p>
         ) : isError ? (
           <p className="text-red-500">Error loading notes</p>
-        ) : filteredNotes.length === 0 ? (
+        ) : notes.length === 0 ? (
           <p className="text-center text-muted-foreground">No matching notes found.</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {filteredNotes.map((note) => (
+            {notes.map((note) => (
               <Card key={note.id} className="bg-background shadow-md hover:shadow-lg transition-shadow relative">
                 <CardHeader>
                   <div className="flex justify-between items-start gap-2">
@@ -94,13 +94,29 @@ export default function HomePage() {
                           <Pen className="w-4 h-4" />
                         </Button>
                       </Link>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        onClick={() => handleDelete(note.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger className="hover:cursor-pointer">
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure to delete this note <span className="font-bold">&rdquo;{note.title}&rdquo;</span>?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your account
+                              and remove your data from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(note.id)} className="bg-red-500 hover:bg-red-800">
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+
                     </div>
                   </div>
                 </CardHeader>
