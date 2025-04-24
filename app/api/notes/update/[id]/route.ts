@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, context: any) {
   const supabase = await createClient();
   const { title, content } = await req.json();
-  const id = params.id;
+  const id = context?.params?.id;
 
   if (!id || !title || !content) {
     return NextResponse.json({ error: "Missing Fields" }, { status: 400 });
