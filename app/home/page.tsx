@@ -1,15 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchNotes, deleteNote } from "@/lib/api";
-import { createClient } from "@/utils/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Trash2, Pen } from "lucide-react";
-import Link from "next/link";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/utils/supabase/client";
+import { fetchNotes, deleteNote, summarizeNote } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
+import { Trash2, Pen, Star, Loader2 } from "lucide-react";
+import Link from "next/link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,13 +21,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 1000);
   const [userId, setUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // For summarizer modal
+  const [open, setOpen] = useState(false);
+  const [summary, setSummary] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [noteToSummarize, setNoteToSummarize] = useState<any>(null);
+
+  const handleSummarize = async () => {
+    if (!noteToSummarize) return;
+
+    try {
+      setLoading(true);
+      const result = await summarizeNote(noteToSummarize.content);
+      setSummary(result);
+    } catch (err: any) {
+      alert(`Failed to summarize note ${err}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -95,28 +116,40 @@ export default function HomePage() {
                         </Button>
                       </Link>
 
+                      <button
+                        onClick={() => {
+                          setNoteToSummarize(note);
+                          setSummary("");
+                          setOpen(true);
+                        }}
+                      >
+                        <Star className="w-4 h-4 text-yellow-500" />
+                      </button>
+
                       <AlertDialog>
                         <AlertDialogTrigger className="hover:cursor-pointer">
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure to delete this note <span className="font-bold">&rdquo;{note.title}&rdquo;</span>?</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Are you absolutely sure to delete this note <span className="font-bold">&rdquo;{note.title}&rdquo;</span>?
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete your account
-                              and remove your data from our servers.
+                              This action cannot be undone. This will permanently delete your note.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(note.id)} className="bg-red-500 hover:bg-red-800">
+                            <AlertDialogAction
+                              onClick={() => handleDelete(note.id)}
+                              className="bg-red-500 hover:bg-red-800"
+                            >
                               Continue
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-
-
                     </div>
                   </div>
                 </CardHeader>
@@ -130,6 +163,38 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Summarize Dialog (Global) */}
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Summarize your note using GenAI 🤖</AlertDialogTitle>
+            <AlertDialogDescription>
+              {loading ? (
+                <div className="flex justify-center items-center py-4">
+                  <Loader2 className="animate-spin text-primary h-5 w-5" />
+                </div>
+              ) : summary && (
+                <div className="mt-4 text-sm text-muted-foreground bg-muted px-4 py-2 rounded-md whitespace-pre-line">
+                  {summary}
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <button
+              onClick={handleSummarize}
+              disabled={loading || !noteToSummarize}
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-800 px-4 py-2"
+            >
+              Summarize
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

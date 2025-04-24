@@ -81,3 +81,23 @@ export async function updateNote({
     throw new Error(error.error || "Failed to update note");
   }
 }
+
+
+// !Summerize the text
+export async function summarizeNote(content: string): Promise<string> {
+  const res = await fetch("/api/summarize", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ content }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Failed to summarize note");
+  }
+
+  const { summary } = await res.json();
+  return summary;
+}

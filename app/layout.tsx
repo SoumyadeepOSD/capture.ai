@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { Roboto_Mono } from "next/font/google";
-import "./globals.css";
 import ReactQueryProvider from "@/provider/ReactQueryProvider";
+import { Roboto_Mono } from "next/font/google";
+import type { Metadata } from "next";
+import "./globals.css";
 
 const robotoMono = Roboto_Mono({
   subsets: ["latin"],
