@@ -16,6 +16,6 @@ export async function signup(formData: FormData) {
       redirect('/error')
     }
     revalidatePath('/', 'layout')
-    return { success: 'Check your email to verify your account.' }
+    return { success: 'Sign in to continue.' }
     // redirect('/')
   }
