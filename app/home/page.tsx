@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchNotes, deleteNote } from "@/lib/api";
+import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,54 +11,46 @@ import { Trash2, Pen } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
-  const [notes, setNotes] = useState<any[]>([]);
-  const [filteredNotes, setFilteredNotes] = useState<any[]>([]);
   const [query, setQuery] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchNotes = async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const { data } = await supabase
-      .from("notes")
-      .select("*")
-      .eq("user_id", user?.id)
-      .order("created_at", { ascending: false });
-
-    setNotes(data || []);
-    setFilteredNotes(data || []);
-  };
-
-
+  // Get user ID on load
   useEffect(() => {
-    fetchNotes();
+    const getUser = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) setUserId(user.id);
+    };
+    getUser();
   }, []);
 
-  useEffect(() => {
-    const filtered = notes.filter((note) =>
+  const { data: notes = [], isLoading, isError } = useQuery({
+    queryKey: ["notes", userId],
+    queryFn: () => fetchNotes(userId!),
+    enabled: !!userId, // wait until userId is available
+  });
+
+  const filteredNotes = notes.filter(
+    (note) =>
       note.title.toLowerCase().includes(query.toLowerCase()) ||
       note.content.toLowerCase().includes(query.toLowerCase())
-    );
-    setFilteredNotes(filtered);
-  }, [query, notes]);
+  );
 
-  const deleteNote = async (id: string) => {
-    const confirmed = confirm("Are you sure you want to delete this note?");
-    if (!confirmed) return;
-  
-    const res = await fetch(`/api/notes/delete/${id}`, {
-      method: "POST",
-    });
-  
-    if (res.ok) {
-      setNotes((prev) => prev.filter((note) => note.id !== id));
-    } else {
-      alert("Failed to delete note.");
+  const mutation = useMutation({
+    mutationFn: deleteNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes", userId] });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this note?")) {
+      mutation.mutate(id);
     }
   };
-  
 
   return (
     <main className="min-h-screen w-full bg-muted py-10 px-4">
@@ -76,7 +69,12 @@ export default function HomePage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        {filteredNotes?.length === 0 ? (
+
+        {isLoading ? (
+          <p>Loading notes...</p>
+        ) : isError ? (
+          <p className="text-red-500">Error loading notes</p>
+        ) : filteredNotes.length === 0 ? (
           <p className="text-center text-muted-foreground">No matching notes found.</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
@@ -99,7 +97,7 @@ export default function HomePage() {
                       <Button
                         size="icon"
                         variant="destructive"
-                        onClick={() => deleteNote(note.id)}
+                        onClick={() => handleDelete(note.id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

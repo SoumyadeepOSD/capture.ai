@@ -1,53 +1,76 @@
-import { createClient } from "@/utils/supabase/server";
-import { editNote } from "./action";
-import { redirect } from "next/navigation";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 
-export default async function EditPage({ params }: { params: { id: string } }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+import { useParams, useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { fetchNoteById, updateNote } from "@/lib/api";
 
-  if (!user) redirect("/");
-  const noteId = await params?.id;
+export default function EditPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
-  if (!noteId) {
-    return <p className="text-center">Invalid note ID.</p>;
-  }
+  const { data: note, isLoading, error }: any = useQuery({
+    queryKey: ["note", id],
+    queryFn: () => fetchNoteById(id),
+    enabled: !!id,
+  });
 
-  const { data: note, error } = await supabase
-    .from("notes")
-    .select("*")
-    .eq("id", noteId)
-    .eq("user_id", user.id)
-    .single();
+  const mutation = useMutation({
+    mutationFn: updateNote,
+    onSuccess: () => {
+      router.push("/home"); // or wherever
+    },
+  });
 
-  if (!note || error) {
-    return <p className="text-center">Note not found or not authorized.</p>;
-  }
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  // ✅ set initial form values after note is loaded
+  useEffect(() => {
+    if (note) {
+      setTitle(note.title);
+      setContent(note.content);
+    }
+  }, [note]);
+
+  if (isLoading) return <p className="text-center">Loading...</p>;
+  if (error) return <p className="text-center text-red-500">Failed to load note.</p>;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate({ id, title, content });
+  };
 
   return (
     <main className="max-w-md mx-auto py-10 px-4">
-      <h2 className="text-xl font-semibold mb-4">Edit Note</h2>
-      <form action={editNote} className="flex flex-col gap-4">
-        <input type="hidden" name="id" value={note.id} />
+      <h2 className="text-2xl font-semibold mb-6">Edit Note</h2>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
           type="text"
           name="title"
-          defaultValue={note.title}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           required
-          className="border p-2 rounded"
+          className="border p-3 rounded"
         />
+
         <textarea
           name="content"
-          defaultValue={note.content}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
           required
           rows={6}
-          className="border p-2 rounded"
+          className="border p-3 rounded"
         />
+
         <button
           type="submit"
-          className="bg-green-600 text-white p-2 rounded hover:bg-green-700"
+          className="bg-green-600 text-white p-3 rounded hover:bg-green-700 transition"
+          disabled={mutation.isPending}
         >
-          Update Note
+          {mutation.isPending ? "Updating..." : "Update Note"}
         </button>
       </form>
     </main>

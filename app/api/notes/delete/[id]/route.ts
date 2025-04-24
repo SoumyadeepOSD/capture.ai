@@ -6,21 +6,32 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const supabase = await createClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.redirect("/");
+  if (userError || !user) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const { error } = await supabase
+  const noteId = params?.id;
+
+  if (!noteId) {
+    return NextResponse.json({ success: false, error: "Note ID is required" }, { status: 400 });
+  }
+
+  const { error: deleteError } = await supabase
     .from("notes")
     .delete()
-    .eq("id", params.id)
+    .eq("id", noteId)
     .eq("user_id", user.id);
 
-  if (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  if (deleteError) {
+    return NextResponse.json(
+      { success: false, error: deleteError.message },
+      { status: 500 }
+    );
   }
 
-  return NextResponse.json({ success: true });
+
+  return NextResponse.json({ success: true }, { status: 200 });
 }

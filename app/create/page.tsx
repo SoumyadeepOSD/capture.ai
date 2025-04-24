@@ -1,15 +1,24 @@
 "use client";
 
-import { useTransition } from "react";
-import { addNote } from "./action";
+import { useMutation } from "@tanstack/react-query";
+import { createNote } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function CreateNotePage() {
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const { mutate, isPending, isSuccess, isError, error } = useMutation({
+    mutationFn: ({ title, content }: { title: string; content: string }) =>
+      createNote(title, content),
+    onSuccess: () => {
+      router.push("/home");
+    },
+  });
 
   const handleForm = (formData: FormData) => {
-    startTransition(() => {
-      addNote(formData);
-    });
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+
+    mutate({ title, content });
   };
 
   return (
@@ -41,9 +50,9 @@ export default function CreateNotePage() {
         </button>
       </form>
 
-      {isPending && (
-        <p className="mt-2 text-sm text-gray-500 animate-pulse">Creating note...</p>
-      )}
+      {isPending && <p className="mt-2 text-sm text-gray-500 animate-pulse">Creating note...</p>}
+      {isSuccess && <p className="mt-2 text-sm text-green-600">Note created successfully!</p>}
+      {isError && <p className="mt-2 text-sm text-red-600">{(error as Error).message}</p>}
     </div>
   );
 }

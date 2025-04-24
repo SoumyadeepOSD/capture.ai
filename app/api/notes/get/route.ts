@@ -1,22 +1,28 @@
-"use server"
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/utils/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(){
-    const supabase = createClient();
-    const {user}:any = (await supabase).auth.getUser();
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const userId = searchParams.get("userId");
 
-    if(!user) return NextResponse.json({error:"Unauthorized"},{status:401});
+  if (!userId) {
+    return NextResponse.json({ error: "User ID missing" }, { status: 400 });
+  }
 
-    const {data, error}:any = (await supabase)
-        .from("notes")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", {ascending:false});
+  const supabase = await createClient();
 
-    if(error) return NextResponse.json({error},{status:500});
+  const { data, error }: any = await supabase
+    .from("notes")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
-    return NextResponse.json({notes:data},{status:200});
+  if (error) {
+    return NextResponse.json({ error }, { status: 500 });
+  }
+
+  return NextResponse.json({ notes: data }, { status: 200 });
 }
