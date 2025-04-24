@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto_Mono } from "next/font/google";
 import "./globals.css";
+import ReactQueryProvider from "@/provider/ReactQueryProvider";
 
 const robotoMono = Roboto_Mono({
   subsets: ["latin"],
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={robotoMono.variable} suppressHydrationWarning>
       <body className="font-roboto-mono antialiased">
-        {children}
+        <ReactQueryProvider>
+          {children}
+        </ReactQueryProvider>
       </body>
     </html>
   );
