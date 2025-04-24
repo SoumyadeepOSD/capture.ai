@@ -2,7 +2,10 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, context: { params: { id: string } }) {
+  const { params } = context;
+  const noteId = params?.id;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -12,8 +15,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   if (userError || !user) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
-
-  const noteId = params?.id;
 
   if (!noteId) {
     return NextResponse.json({ success: false, error: "Note ID is required" }, { status: 400 });
@@ -31,7 +32,6 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       { status: 500 }
     );
   }
-
 
   return NextResponse.json({ success: true }, { status: 200 });
 }
