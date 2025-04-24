@@ -24,7 +24,7 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
             </div>
-            <Button formAction={login} type="submit" className="w-full mt-2">
+            <Button formAction={login} type="submit" className="w-full mt-2 hover:cursor-pointer">
               Log in
             </Button>
           </form>

@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { logout } from "../logout/action";
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
@@ -84,11 +85,14 @@ export default function HomePage() {
   return (
     <main className="min-h-screen w-full bg-muted py-10 px-4">
       <div className="max-w-3xl mx-auto flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-row items-center justify-between gap-3">
           <h1 className="text-3xl font-semibold">Your Notes 📝</h1>
+          <div className="flex flex-row items-center justify-center gap-3">
           <Link href="/create">
             <Button variant="default">+ New Note</Button>
           </Link>
+          <Button variant="destructive" onClick={logout} className="hover:cursor-pointer">Logout</Button>
+          </div>
         </div>
 
         <Input
@@ -217,6 +221,7 @@ export default function HomePage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Info section of note */}
       <AlertDialog open={openNoteViewer} onOpenChange={setOpenNoteViewer}>
         <AlertDialogContent>
           <AlertDialogHeader>

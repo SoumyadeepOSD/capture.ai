@@ -46,7 +46,7 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
             </div>
-            <Button type="submit" variant="outline" className="w-full mt-2">
+            <Button type="submit" className="w-full mt-2 hover:cursor-pointer">
               Sign up
             </Button>
           </form>
