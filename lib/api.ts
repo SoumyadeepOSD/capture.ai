@@ -25,7 +25,7 @@ export async function fetchNotes(userId: string, keyword?: string): Promise<any[
 // !Delete Note
 export async function deleteNote(id: string): Promise<void> {
   const res = await fetch(`/api/notes/delete/${id}`, {
-    method: "POST",
+    method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete note");
 }
